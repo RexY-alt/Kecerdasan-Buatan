@@ -6,7 +6,7 @@ libsm6
 libxext6
 libxrender-dev
 libgomp1
-libgcc-s1
+# libgcc-s1 # Often already present, but fine to list
 git
 wget
 curl
