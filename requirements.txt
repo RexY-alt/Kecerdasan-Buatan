@@ -1,15 +1,28 @@
-torch>=1.9.0
-torchvision>=0.10.0
-openmim>=0.3.0
+# Core dependencies
 streamlit>=1.28.0
 numpy>=1.21.0
 Pillow>=8.3.0
+
+# PyTorch - CPU version for Streamlit Cloud
+torch>=1.13.0+cpu
+torchvision>=0.14.0+cpu
+
+# Computer Vision
 opencv-python-headless==4.8.0.74
+
+# MMDetection ecosystem
+openmim>=0.3.0
+mmengine>=0.7.0
+
+# Utilities
+click==7.1.2
+typer==0.9.4
 matplotlib>=3.5.0
 scipy>=1.7.0
 terminaltables>=3.1.0
 pycocotools>=2.0.2
-click==7.1.2
-typer==0.9.4
-mmcv-full==1.5.0
-mmdet>=2.25.0
+
+# Additional dependencies
+packaging
+addict
+yapf
