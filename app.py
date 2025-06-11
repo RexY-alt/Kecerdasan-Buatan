@@ -3,7 +3,6 @@
 import streamlit as st
 import sys
 import os
-# import subprocess # No longer needed for pip/git
 import time
 from pathlib import Path
 
@@ -16,14 +15,10 @@ st.set_page_config(
 )
 
 # Ensure CBNetV2 is in the Python path if it's a submodule at the root
-# This helps Python find modules within the CBNetV2 directory.
-# model.py also does this for its own context, which is fine.
 cbnet_path = Path("CBNetV2")
 if cbnet_path.exists() and cbnet_path.is_dir():
     sys.path.insert(0, str(cbnet_path.resolve()))
 else:
-    # If CBNetV2 is not found, it's a critical error for the app to run.
-    # This might happen if the submodule didn't checkout correctly.
     st.error(f"CRITICAL ERROR: CBNetV2 directory not found at {str(cbnet_path.resolve())}. Ensure the submodule is correctly checked out.")
     st.stop()
 
@@ -33,12 +28,10 @@ try:
     import torch
     import torch.nn as nn
     from PIL import Image
-    # import io # Not used
-    # import base64 # Not used
     
     # Try to import model
     try:
-        from model import Model # model.py should be in the same directory as app.py
+        from model import Model
         model_available = True
     except ImportError as e:
         st.error(f"Failed to import `Model` from model.py: {e}")
@@ -51,11 +44,11 @@ try:
 except ImportError as e:
     st.error(f"Missing critical dependencies (e.g., numpy, torch, Pillow): {e}")
     st.info("Please ensure your `requirements.txt` is complete and Streamlit Cloud can install them.")
-    model_available = False # Ensure this is set
-    st.stop() # Stop if basic imports fail
+    model_available = False
+    st.stop()
 
 
-# Custom CSS (keep as is)
+# Custom CSS
 st.markdown("""
 <style>
     .main-header {
@@ -95,12 +88,13 @@ if model_available:
     if 'model' not in st.session_state:
         try:
             with st.spinner('Loading models... This may take a few minutes on first run.'):
-                st.session_state.model = Model() # This now relies on model.py
+                st.session_state.model = Model()
                 st.success("Models loaded successfully!")
         except Exception as e:
             st.error(f"Failed to load models: {e}")
+            st.exception(e) # Show full traceback for debugging
             st.info("This might be due to missing model weight files (check `weights` directory and download logic in `model.py`), issues with model configurations, or problems with the CBNetV2/MMDetection setup.")
-            model_available = False # Update status
+            model_available = False
 
 if 'results' not in st.session_state:
     st.session_state.results = {}
@@ -125,7 +119,7 @@ if not model_available:
     """)
     st.stop()
 
-# Sidebar (keep as is)
+# Sidebar
 with st.sidebar:
     st.header("⚙️ Configuration")
     
@@ -158,7 +152,7 @@ with st.sidebar:
         - **Use case:** Detailed object analysis
         """)
 
-# Main content (largely keep as is)
+# Main content
 col1, col2 = st.columns([1, 2])
 
 with col1:
@@ -173,7 +167,7 @@ with col1:
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded Image", use_column_width=True)
-        image_np = np.array(image.convert("RGB")) # Ensure RGB
+        image_np = np.array(image.convert("RGB"))
         
         if st.button("🚀 Run Comparison", type="primary", use_container_width=True):
             if not model_available or 'model' not in st.session_state:
@@ -210,14 +204,11 @@ with col1:
                                 'results': results_faster,
                                 'visualization': vis_faster,
                                 'inference_time': faster_time,
-                                'detections': sum(len(bbox_class_results) for bbox_class_results in results_faster[0]) if isinstance(results_faster, tuple) and len(results_faster) > 0 else sum(len(r) for r in results_faster) # Handle potential tuple output from mmdet for bbox
                             },
                             'mask_rcnn': {
                                 'results': results_mask,
                                 'visualization': vis_mask,
                                 'inference_time': mask_time,
-                                # MMDetection often returns (bbox_results, segm_results) for Mask R-CNN
-                                'detections': sum(len(bbox_class_results) for bbox_class_results in results_mask[0]) if isinstance(results_mask, tuple) and len(results_mask) > 0 else sum(len(r) for r in results_mask)
                             }
                         }
                         
@@ -225,21 +216,19 @@ with col1:
                         
                 except Exception as e:
                     st.error(f"Error during model inference: {e}")
-                    st.exception(e) # Show full traceback for debugging
+                    st.exception(e)
                     st.info("Please try with a different image or check the model setup and logs.")
 
-# Results display and Comparison Table (keep as is, but be mindful of the structure of 'results_faster' and 'results_mask')
-# ... (rest of your app.py) ...
-# Important: Adjust how 'detections' and 'Detection Breakdown' are calculated based on the actual structure returned by inference_detector for your models.
-# For MMDetection:
-# - Object detection models usually return a list of arrays (one per class), where each array contains [x1, y1, x2, y2, score].
-# - Instance segmentation models often return a tuple: (bbox_results, segm_results). bbox_results is similar to above. segm_results contains masks.
-# You might need to adjust the `detections` count and breakdown accordingly.
-
-# Example adjustment for detection count and breakdown (inside `with col2` and tabs):
-
-# Adjust inside 'with col2':
-# ...
+with col2:
+    if st.session_state.results:
+        st.subheader("📊 Comparison Results")
+        
+        # Performance metrics
+        col_metric1, col_metric2, col_metric3 = st.columns(3)
+        
+        faster_time = st.session_state.results['faster_rcnn']['inference_time']
+        mask_time = st.session_state.results['mask_rcnn']['inference_time']
+        
         faster_data = st.session_state.results['faster_rcnn']['results']
         mask_data = st.session_state.results['mask_rcnn']['results']
 
@@ -247,7 +236,7 @@ with col1:
         faster_detections = sum(len(r) for r in faster_data)
 
         # For Mask R-CNN (often tuple: (bbox_results, segm_results))
-        if isinstance(mask_data, tuple) and len(mask_data) == 2:
+        if isinstance(mask_data, tuple) and len(mask_data) > 0:
             mask_detections = sum(len(r) for r in mask_data[0]) # Detections from bounding boxes
         else: # Fallback if it's just bbox results
             mask_detections = sum(len(r) for r in mask_data)
@@ -255,35 +244,160 @@ with col1:
         # Update stored detections for captions etc.
         st.session_state.results['faster_rcnn']['detections'] = faster_detections
         st.session_state.results['mask_rcnn']['detections'] = mask_detections
-# ...
+        
+        with col_metric1:
+            st.metric(
+                "⚡ Faster R-CNN Time",
+                f"{faster_time:.3f}s",
+                delta=f"{((faster_time - mask_time) / mask_time * 100):+.1f}%" if mask_time > 0 else "N/A"
+            )
+        
+        with col_metric2:
+            st.metric(
+                "🎯 Mask R-CNN Time",
+                f"{mask_time:.3f}s",
+                delta=f"{((mask_time - faster_time) / faster_time * 100):+.1f}%" if faster_time > 0 else "N/A"
+            )
+        
+        with col_metric3:
+            speed_up = mask_time / faster_time if faster_time > 0 else 0
+            st.metric(
+                "📈 Speed Ratio",
+                f"{speed_up:.2f}x",
+                help="How many times faster is Faster R-CNN compared to Mask R-CNN"
+            )
 
-# Adjust in 'tab2' (Faster R-CNN Details):
-# ...
+# Results display
+if st.session_state.results:
+    st.markdown("---")
+    st.subheader("🖼️ Visual Comparison")
+    
+    faster_detections = st.session_state.results['faster_rcnn']['detections']
+    faster_time = st.session_state.results['faster_rcnn']['inference_time']
+    mask_detections = st.session_state.results['mask_rcnn']['detections']
+    mask_time = st.session_state.results['mask_rcnn']['inference_time']
+    
+    # Create tabs for different views
+    tab1, tab2, tab3 = st.tabs(["Side by Side", "Faster R-CNN Details", "Mask R-CNN Details"])
+    
+    with tab1:
+        col_left, col_right = st.columns(2)
+        
+        with col_left:
+            st.markdown("### 🏃‍♂️ Faster R-CNN (DB-ResNet50)")
+            st.image(
+                st.session_state.results['faster_rcnn']['visualization'],
+                caption=f"Detections: {faster_detections} | Time: {faster_time:.3f}s",
+                use_column_width=True
+            )
+        
+        with col_right:
+            st.markdown("### 🎭 Mask R-CNN (DB-Swin-T)")
+            st.image(
+                st.session_state.results['mask_rcnn']['visualization'],
+                caption=f"Detections: {mask_detections} | Time: {mask_time:.3f}s",
+                use_column_width=True
+            )
+    
+    #=====================================================#
+    # KODE YANG DIPERBAIKI UNTUK TAB 2
+    #=====================================================#
+    with tab2:
+        st.markdown("### 🏃‍♂️ Faster R-CNN Detailed Results")
+        col_img, col_stats = st.columns([2, 1])
+        
+        with col_img:
+            st.image(
+                st.session_state.results['faster_rcnn']['visualization'],
+                use_column_width=True
+            )
+        
+        with col_stats:
+            st.markdown("#### 📈 Performance Metrics")
+            st.markdown(f"**Inference Time:** {faster_time:.3f} seconds")
+            st.markdown(f"**Total Detections:** {faster_detections}")
+            st.markdown(f"**Score Threshold:** {score_threshold}")
+            
             st.markdown("#### 🏷️ Detection Breakdown")
             faster_results_data = st.session_state.results['faster_rcnn']['results']
-            for i, class_detections in enumerate(faster_results_data):
-                if len(class_detections) > 0:
-                    st.markdown(f"**Class {i}:** {len(class_detections)} detections")
-# ...
-
-# Adjust in 'tab3' (Mask R-CNN Details):
-# ...
-            st.markdown("#### 🏷️ Detection Breakdown")
-            mask_results_data = st.session_state.results['mask_rcnn']['results']
-            # If Mask R-CNN results are a tuple (bbox_results, segm_results)
-            if isinstance(mask_results_data, tuple) and len(mask_results_data) > 0:
-                bbox_results = mask_results_data[0]
-                for i, class_detections in enumerate(bbox_results):
-                    if len(class_detections) > 0:
-                        st.markdown(f"**Class {i}:** {len(class_detections)} detections (bounding boxes)")
-            else: # If it's just a list of detection arrays
-                for i, class_detections in enumerate(mask_results_data):
+            
+            if faster_results_data and any(len(arr) > 0 for arr in faster_results_data):
+                for i, class_detections in enumerate(faster_results_data):
                     if len(class_detections) > 0:
                         st.markdown(f"**Class {i}:** {len(class_detections)} detections")
+            else:
+                st.markdown("No detections found with the current score threshold.")
+    
+    #=====================================================#
+    # KODE YANG DIPERBAIKI UNTUK TAB 3
+    #=====================================================#
+    with tab3:
+        st.markdown("### 🎭 Mask R-CNN Detailed Results")
+        col_img, col_stats = st.columns([2, 1])
+        
+        with col_img:
+            st.image(
+                st.session_state.results['mask_rcnn']['visualization'],
+                use_column_width=True
+            )
+        
+        with col_stats:
+            st.markdown("#### 📈 Performance Metrics")
+            st.markdown(f"**Inference Time:** {mask_time:.3f} seconds")
+            st.markdown(f"**Total Detections:** {mask_detections}")
+            st.markdown(f"**Score Threshold:** {score_threshold}")
+            
+            st.markdown("#### 🏷️ Detection Breakdown")
+            mask_results_data = st.session_state.results['mask_rcnn']['results']
 
-# ... (rest of your app.py)
-# Ensure you have the footer and tips section as before.
-# ...
+            if isinstance(mask_results_data, tuple) and len(mask_results_data) > 0:
+                bbox_results = mask_results_data[0]
+                if any(len(arr) > 0 for arr in bbox_results):
+                    for i, class_detections in enumerate(bbox_results):
+                        if len(class_detections) > 0:
+                            st.markdown(f"**Class {i}:** {len(class_detections)} detections (bounding boxes)")
+                else:
+                    st.markdown("No detections found with the current score threshold.")
+            else:
+                if mask_results_data and any(len(arr) > 0 for arr in mask_results_data):
+                    for i, class_detections in enumerate(mask_results_data):
+                        if len(class_detections) > 0:
+                            st.markdown(f"**Class {i}:** {len(class_detections)} detections")
+                else:
+                    st.markdown("No detections found with the current score threshold.")
+
+    # Comparison table
+    st.markdown("---")
+    st.subheader("📋 Detailed Comparison Table")
+    
+    comparison_data = {
+        "Metric": [
+            "Inference Time (seconds)",
+            "Total Detections",
+            "Speed (FPS)",
+            "Model Type",
+            "Backbone",
+            "Primary Use Case"
+        ],
+        "Faster R-CNN (DB-ResNet50)": [
+            f"{faster_time:.3f}",
+            f"{faster_detections}",
+            f"{1/faster_time:.1f}" if faster_time > 0 else "N/A",
+            "Two-stage detector",
+            "ResNet50 + CBNetV2",
+            "Real-time detection"
+        ],
+        "Mask R-CNN (DB-Swin-T)": [
+            f"{mask_time:.3f}",
+            f"{mask_detections}",
+            f"{1/mask_time:.1f}" if mask_time > 0 else "N/A",
+            "Instance segmentation",
+            "Swin Transformer Tiny",
+            "Detailed segmentation"
+        ]
+    }
+    
+    st.table(comparison_data)
 
 # Footer
 st.markdown("---")
