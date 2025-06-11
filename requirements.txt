@@ -13,8 +13,8 @@ opencv-python-headless>=4.8.0
 # MMDetection Ecosystem (diperbaiki)
 openmim==0.3.7
 mmengine==0.8.0
-mmcv==2.0.0  
-mmdet==3.0.0  
+mmcv-full==2.0.0  
+mmdet==3.0.0
 
 # Utilities
 matplotlib>=3.5.0
