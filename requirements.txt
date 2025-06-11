@@ -3,18 +3,18 @@ streamlit>=1.28.0
 numpy>=1.21.0
 Pillow>=8.3.0
 
-# PyTorch - pastikan versi yang kompatibel
-torch>=1.13.0
-torchvision>=0.14.0
+# PyTorch (versi stabil & kompatibel dengan MMDetection 3.x)
+torch==1.13.1
+torchvision==0.14.1
 
 # Computer Vision
 opencv-python-headless>=4.8.0
 
-# MMDetection ecosystem - versi yang lebih stabil
-openmim>=0.3.0
-mmengine>=0.8.0
-mmcv>=2.0.0
-mmdet>=3.0.0
+# MMDetection Ecosystem - versi stabil & saling cocok
+openmim==0.3.7
+mmengine==0.8.0
+mmcv==2.1.0
+mmdet==3.1.0
 
 # Utilities
 matplotlib>=3.5.0
