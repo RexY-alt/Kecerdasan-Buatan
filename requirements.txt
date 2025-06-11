@@ -3,14 +3,14 @@ streamlit>=1.28.0
 numpy>=1.21.0
 Pillow>=8.3.0
 
-# PyTorch (CPU-only build) - using standard versions
-torch==1.13.1
-torchvision==0.14.1
+# PyTorch CPU-only using direct URLs
+https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp310-cp310-linux_x86_64.whl
+https://download.pytorch.org/whl/cpu/torchvision-0.14.1%2Bcpu-cp310-cp310-linux_x86_64.whl
 
 # Computer Vision
 opencv-python-headless==4.8.0.74
 
-# MMDetection & MMCV ecosystem - using more compatible versions
+# MMDetection & MMCV ecosystem
 openmim>=0.3.0
 mmengine==0.7.4
 mmcv-full==1.6.0
