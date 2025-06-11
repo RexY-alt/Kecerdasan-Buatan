@@ -3,25 +3,22 @@ streamlit>=1.28.0
 numpy>=1.21.0
 Pillow>=8.3.0
 
-# PyTorch (CPU-only build) - using standard versions
-torch==1.13.1
-torchvision==0.14.1
+# PyTorch - pastikan versi yang kompatibel
+torch>=1.13.0
+torchvision>=0.14.0
 
 # Computer Vision
-opencv-python-headless==4.8.0.74
+opencv-python-headless>=4.8.0
 
-# MMDetection & MMCV ecosystem - using more compatible versions
+# MMDetection ecosystem - versi yang lebih stabil
 openmim>=0.3.0
-mmengine==0.7.4
-mmcv-full==1.6.0
-mmdet==2.25.3
+mmengine>=0.8.0
+mmcv>=2.0.0
+mmdet>=3.0.0
 
 # Utilities
-click==7.1.2
 matplotlib>=3.5.0
 scipy>=1.7.0
-terminaltables==3.1.0
 pycocotools>=2.0.2
 packaging
 addict
-yapf
